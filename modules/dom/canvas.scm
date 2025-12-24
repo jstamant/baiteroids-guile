@@ -35,7 +35,9 @@
             close-path
             move-to
             line-to
-            fill))
+            fill
+            rotate
+            translate))
 
 ;; HTMLCanvasElement
 (define-foreign get-context
@@ -89,3 +91,10 @@
 (define-foreign fill
   "canvas" "fill"
   (ref extern) -> none)
+
+(define-foreign rotate
+  "canvas" "rotate"
+  (ref extern) f64 -> none)
+(define-foreign translate
+  "canvas" "translate"
+  (ref extern) f64 f64 -> none)

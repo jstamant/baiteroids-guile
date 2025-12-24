@@ -22,13 +22,24 @@
   #:pure
   #:use-module (scheme base)
   #:use-module (hoot ffi)
-  #:export (random clamp))
-
-(define-foreign random
-  "math" "random"
-  -> f64)
+  #:export (clamp
+            random
+            radians->degrees
+            degrees->radians))
 
 (define (clamp x min max)
   (cond ((< x min) min)
         ((> x max) max)
         (else x)))
+
+(define-foreign random
+  "math" "random"
+  -> f64)
+
+(define pi 3.141592654)
+
+(define (radians->degrees rad)
+  (* rad (/ 180 pi)))
+
+(define (degrees->radians deg)
+  (* deg (/ pi 180)))

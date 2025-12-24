@@ -68,7 +68,9 @@ window.addEventListener("load", async () => {
           closePath: (ctx) => ctx.closePath(),
           lineTo: (ctx, x, y) => ctx.lineTo(x, y),
           moveTo: (ctx, x, y) => ctx.moveTo(x, y),
-          fill: (ctx) => ctx.fill()
+          fill: (ctx) => ctx.fill(),
+          rotate: (ctx, angle) => ctx.rotate(angle),
+          translate: (ctx, x, y) => ctx.translate(x, y)
         },
         math: {
           random: () => Math.random()

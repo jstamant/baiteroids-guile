@@ -36,9 +36,12 @@
 
 ;; Data types
 (define-record-type <ship>
-  (make-ship position velocity)
+  (make-ship position rotation velocity)
   ship-type?
   (position ship-position)
+  (rotation ship-rotation set-ship-rotation!)
+  ;; TODO need to split velocity into polar vector. currently setup as
+  ;; x->magnitude, y->angle - see chickadee for Dave's implementation
   (velocity ship-velocity))
 
 (define-record-type <brick-type>
@@ -67,7 +70,7 @@
   (hitbox paddle-hitbox))
 
 (define-record-type <level>
-  (make-level state ship bricks ball paddle score move-left? move-right?)
+  (make-level state ship bricks ball paddle score move-left? move-right? move-up?)
   level?
   (state level-state set-level-state!) ; play, win, lose
   (ship level-ship)
@@ -76,7 +79,8 @@
   (paddle level-paddle)
   (score level-score set-level-score!)
   (move-left? level-move-left? set-level-move-left!)
-  (move-right? level-move-right? set-level-move-right!))
+  (move-right? level-move-right? set-level-move-right!)
+  (move-up? level-move-up? set-level-move-up!))
 
 ;; Assets
 (define image:paddle       (make-image "assets/images/paddle.png"))
@@ -99,6 +103,8 @@
 (define paddle-width  104.0)
 (define paddle-height 24.0)
 (define paddle-speed  6.0)
+(define ship-acceleration 0.02)
+(define ship-turn-rate 4.0)
 (define brick:red     (make-brick-type image:brick-red 10))
 (define brick:green   (make-brick-type image:brick-green 20))
 (define brick:blue    (make-brick-type image:brick-blue 30))
@@ -126,6 +132,7 @@
 (define (make-level-1)
   (make-level 'play
               (make-ship (vec2 (/ game-width 2) (/ game-height 2))
+                         0
                          (vec2 0.0 0.0))
               (make-brick-grid
                (vector
@@ -143,7 +150,7 @@
                                          (/ paddle-width 2.0))
                                       (- game-height paddle-height 8.0)
                                       paddle-width paddle-height))
-              0 #f #f))
+              0 #f #f #f))
 
 ;; Game state
 (define *level* (make-level-1))
@@ -168,6 +175,25 @@
                   (+ (if (level-move-left? level) -1.0 0.0)
                      (if (level-move-right? level) 1.0 0.0)))))
     (set-vec2-x! (paddle-velocity (level-paddle level)) speed)))
+
+(define (update-ship-velocity! level)
+  (when (level-move-up? level)
+    (let* ((ship (level-ship level))
+           (velocity (ship-velocity ship))
+           (rotation (ship-rotation ship))
+           (new-velocity (vec2
+                          (+ (* ship-acceleration (cos (degrees->radians rotation)))
+                             (vec2-x velocity))
+                          (+ (* ship-acceleration (sin (degrees->radians rotation)))
+                             (vec2-y velocity)))))
+      (set-vec2-x! velocity (vec2-x new-velocity))
+      (set-vec2-y! velocity (vec2-y new-velocity)))))
+
+(define (update-ship-rotation! level)
+  (let* ((rotation (+ (ship-rotation (level-ship level))
+                      (if (level-move-left? level) (- 0 ship-turn-rate) 0)
+                      (if (level-move-right? level) ship-turn-rate 0))))
+    (set-ship-rotation! (level-ship level) rotation)))
 
 (define (speed-up-ball! ball)
   (let* ((v (ball-velocity ball))
@@ -213,15 +239,27 @@
             (paddle (level-paddle *level*))
             (p-velocity (paddle-velocity paddle))
             (p-hitbox (paddle-hitbox paddle))
+            (ship (level-ship *level*))
+            (ship-pos (ship-position ship))
+            (ship-vel (ship-velocity ship))
             (score (level-score *level*)))
-       ;; Move ball and paddle
-       (set-rect-x! b-hitbox (+ (rect-x b-hitbox) (vec2-x b-velocity)))
-       (set-rect-y! b-hitbox (+ (rect-y b-hitbox) (vec2-y b-velocity)))
-       ;; We only move the paddle along the x-axis.
-       (set-rect-x! p-hitbox
-                    (clamp (+ (rect-x p-hitbox) (vec2-x p-velocity))
-                           0.0
-                           (- game-width paddle-width)))
+       ;; Read input
+       (update-ship-velocity! *level*)
+       (update-ship-rotation! *level*)
+
+       ;; ;; Move ball and paddle
+       ;; (set-rect-x! b-hitbox (+ (rect-x b-hitbox) (vec2-x b-velocity)))
+       ;; (set-rect-y! b-hitbox (+ (rect-y b-hitbox) (vec2-y b-velocity)))
+       ;; ;; We only move the paddle along the x-axis.
+       ;; (set-rect-x! p-hitbox
+       ;;              (clamp (+ (rect-x p-hitbox) (vec2-x p-velocity))
+       ;;                     0.0
+       ;;                     (- game-width paddle-width)))
+
+       ;; Move ship
+       (set-vec2-x! ship-pos (+ (vec2-x ship-pos) (vec2-x ship-vel)))
+       (set-vec2-y! ship-pos (+ (vec2-y ship-pos) (vec2-y ship-vel)))
+
        ;; Collide ball against walls, bricks, and paddle.
        (cond
         ((< (rect-x b-hitbox) 0.0)      ; left wall
@@ -279,7 +317,7 @@
     (set-fill-color! context game-bg)
     (fill-rect context 0.0 0.0 game-width game-height)
     ;; Draw ship
-    (draw-ship context (ship-position ship))
+    (draw-ship context (ship-position ship) (ship-rotation ship))
     ;; ;; Draw bricks
     ;; (do ((i 0 (+ i 1)))
     ;;     ((= i (vector-length bricks)))
@@ -323,20 +361,24 @@
   (request-animation-frame draw-callback))
 (define draw-callback (procedure->external draw))
 
-(define (draw-ship context position)
+(define (draw-ship context position rotation)
   (let ((x (vec2-x position))
         (y (vec2-y position)))
     (set-fill-color! context game-fg)
+    (translate context x y)
+    (rotate context (degrees->radians rotation))
     (begin-path context)
-    (line-to context (- x 10) (- y 8))
-    (line-to context (+ x 10) y)
-    (line-to context (- x 10) (+ y 8))
+    (line-to context -10 -8)
+    (line-to context 10 0)
+    (line-to context -10 8)
+    (close-path context)
     (fill context)
-    (close-path context)))
+    (set-transform! context 1 0 0 1 0 0)))
 
 ;; Input
 (define key:left "ArrowLeft")
 (define key:right "ArrowRight")
+(define key:up "ArrowUp")
 (define key:confirm "Enter")
 
 (define (on-key-down event)
@@ -349,7 +391,9 @@
          (update-paddle-velocity! *level*))
         ((string=? key key:right)
          (set-level-move-right! *level* #t)
-         (update-paddle-velocity! *level*))))
+         (update-paddle-velocity! *level*))
+        ((string=? key key:up)
+         (set-level-move-up! *level* #t))))
       ((or 'win 'lose)
        (when (string=? key key:confirm)
          (set! *level* (make-level-1)))))))
@@ -364,7 +408,9 @@
          (update-paddle-velocity! *level*))
         ((string=? key key:right)
          (set-level-move-right! *level* #f)
-         (update-paddle-velocity! *level*))))
+         (update-paddle-velocity! *level*))
+        ((string=? key key:up)
+         (set-level-move-up! *level* #f))))
       (_ #t))))
 
 ;; Canvas and event loop setup

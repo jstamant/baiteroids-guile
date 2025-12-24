@@ -28,7 +28,6 @@
             vec2-y
             set-vec2-x!
             set-vec2-y!
-            with-vec2
             vec2-add!
             vec2-sub!
             vec2-mul-scalar!
