@@ -131,9 +131,16 @@
 
 (define (make-level-1)
   (make-level 'play
-              (make-ship (vec2 (/ game-width 2) (/ game-height 2))
-                         0
-                         (vec2 0.0 0.0))
+              (let* ((initial-velocity (vec2
+                                        0.4
+                                        ;; TODO implement initial velocity angle
+                                        ;; (* 360 (random))))
+                                        0))
+                     (initial-rotation (+ (- (* (random) 60) 30)
+                                          (vec2-y initial-velocity))))
+                (make-ship (vec2 (/ game-width 2) (/ game-height 2))
+                           initial-rotation
+                           initial-velocity))
               (make-brick-grid
                (vector
                 (vector brick:red brick:green brick:blue brick:red brick:green brick:blue brick:red brick:green)

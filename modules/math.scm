@@ -24,6 +24,7 @@
   #:use-module (hoot ffi)
   #:export (clamp
             random
+            pi
             radians->degrees
             degrees->radians))
 
