@@ -1,4 +1,4 @@
-;;; Copyright (C) 2024 David Thompson <dave@spritely.institute>
+;;; Copyright (C) 2025 Justin St-Amant <jstamant24@gmail.com>
 ;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 ;;; Commentary:
 ;;;
-;;; Example game showing off several common game programming things.
+;;; A remix on the Asteroids arcade game. Asteroids gravitate towards you, and
+;;; you must lure them to collide with eachother
 ;;;
 ;;; Code:
 
@@ -34,6 +35,12 @@
              (srfi srfi-9))
 
 ;; Data types
+(define-record-type <ship>
+  (make-ship position velocity)
+  ship-type?
+  (position ship-position)
+  (velocity ship-velocity))
+
 (define-record-type <brick-type>
   (make-brick-type image points)
   brick-type?
@@ -60,9 +67,10 @@
   (hitbox paddle-hitbox))
 
 (define-record-type <level>
-  (make-level state bricks ball paddle score move-left? move-right?)
+  (make-level state ship bricks ball paddle score move-left? move-right?)
   level?
   (state level-state set-level-state!) ; play, win, lose
+  (ship level-ship)
   (bricks level-bricks)
   (ball level-ball)
   (paddle level-paddle)
@@ -82,6 +90,8 @@
 ;; Game data
 (define game-width    640.0)
 (define game-height   480.0)
+(define game-fg "#ffffff")
+(define game-bg "#140c1c")
 (define brick-width   64.0)
 (define brick-height  32.0)
 (define ball-width    22.0)
@@ -115,6 +125,8 @@
 
 (define (make-level-1)
   (make-level 'play
+              (make-ship (vec2 (/ game-width 2) (/ game-height 2))
+                         (vec2 0.0 0.0))
               (make-brick-grid
                (vector
                 (vector brick:red brick:green brick:blue brick:red brick:green brick:blue brick:red brick:green)
@@ -258,41 +270,44 @@
             str)))))
 
 (define (draw prev-time)
-  (let ((bricks (level-bricks *level*))
-        (ball (level-ball *level*))
-        (paddle (level-paddle *level*))
+  (let (;;(bricks (level-bricks *level*))
+        ;;(ball (level-ball *level*))
+        ;;(paddle (level-paddle *level*))
+        (ship (level-ship *level*))
         (score (level-score *level*)))
     ;; Draw background
-    (set-fill-color! context "#140c1c")
+    (set-fill-color! context game-bg)
     (fill-rect context 0.0 0.0 game-width game-height)
-    ;; Draw bricks
-    (do ((i 0 (+ i 1)))
-        ((= i (vector-length bricks)))
-      (let* ((brick (vector-ref bricks i))
-             (type (brick-type brick))
-             (hitbox (brick-hitbox brick)))
-        (unless (brick-broken? brick)
-          (draw-image context (brick-type-image type)
-                      0.0 0.0
-                      brick-width brick-height
-                      (rect-x hitbox) (rect-y hitbox)
-                      brick-width brick-height))))
-    ;; Draw paddle
-    (let ((w 104.0)
-          (h 24.0)
-          (hitbox (paddle-hitbox paddle)))
-      (draw-image context image:paddle
-                  0.0 0.0 w h
-                  (rect-x hitbox) (rect-y hitbox) w h))
-    ;; Draw ball
-    (let ((w 22.0)
-          (h 22.0)
-          (hitbox (ball-hitbox ball)))
-      (draw-image context image:ball
-                  0.0 0.0 w h
-                  (rect-x hitbox) (rect-y hitbox) w h))
+    ;; Draw ship
+    (draw-ship context (ship-position ship))
+    ;; ;; Draw bricks
+    ;; (do ((i 0 (+ i 1)))
+    ;;     ((= i (vector-length bricks)))
+    ;;   (let* ((brick (vector-ref bricks i))
+    ;;          (type (brick-type brick))
+    ;;          (hitbox (brick-hitbox brick)))
+    ;;     (unless (brick-broken? brick)
+    ;;       (draw-image context (brick-type-image type)
+    ;;                   0.0 0.0
+    ;;                   brick-width brick-height
+    ;;                   (rect-x hitbox) (rect-y hitbox)
+    ;;                   brick-width brick-height))))
+    ;; ;; Draw paddle
+    ;; (let ((w 104.0)
+    ;;       (h 24.0)
+    ;;       (hitbox (paddle-hitbox paddle)))
+    ;;   (draw-image context image:paddle
+    ;;               0.0 0.0 w h
+    ;;               (rect-x hitbox) (rect-y hitbox) w h))
+    ;; ;; Draw ball
+    ;; (let ((w 22.0)
+    ;;       (h 22.0)
+    ;;       (hitbox (ball-hitbox ball)))
+    ;;   (draw-image context image:ball
+    ;;               0.0 0.0 w h
+    ;;               (rect-x hitbox) (rect-y hitbox) w h))
     ;; Print score
-    (set-fill-color! context "#ffffff")
+    (set-fill-color! context game-fg)
     (set-font! context "bold 24px monospace")
     (set-text-align! context "left")
     (fill-text context "SCORE:" 16.0 36.0)
@@ -307,6 +322,17 @@
       (_ #t)))
   (request-animation-frame draw-callback))
 (define draw-callback (procedure->external draw))
+
+(define (draw-ship context position)
+  (let ((x (vec2-x position))
+        (y (vec2-y position)))
+    (set-fill-color! context game-fg)
+    (begin-path context)
+    (line-to context (- x 10) (- y 8))
+    (line-to context (+ x 10) y)
+    (line-to context (- x 10) (+ y 8))
+    (fill context)
+    (close-path context)))
 
 ;; Input
 (define key:left "ArrowLeft")

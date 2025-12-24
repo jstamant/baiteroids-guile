@@ -63,7 +63,12 @@ window.addEventListener("load", async () => {
           drawImage: (ctx, image, sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh),
           setScale: (ctx, sx, sy) => ctx.scale(sx, sy),
           setTransform: (ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
-          setImageSmoothingEnabled: (ctx, enabled) => ctx.imageSmoothingEnabled = (enabled == 1)
+          setImageSmoothingEnabled: (ctx, enabled) => ctx.imageSmoothingEnabled = (enabled == 1),
+          beginPath: (ctx) => ctx.beginPath(),
+          closePath: (ctx) => ctx.closePath(),
+          lineTo: (ctx, x, y) => ctx.lineTo(x, y),
+          moveTo: (ctx, x, y) => ctx.moveTo(x, y),
+          fill: (ctx) => ctx.fill()
         },
         math: {
           random: () => Math.random()
