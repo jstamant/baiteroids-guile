@@ -81,7 +81,7 @@
   level?
   (state level-state set-level-state!) ; play, win, lose
   (ship level-ship)
-  (asteroids level-asteroids)
+  (asteroids level-asteroids set-level-asteroids!)
   (bricks level-bricks)
   (ball level-ball)
   (paddle level-paddle)
@@ -113,7 +113,8 @@
 (define paddle-speed  6.0)
 (define ship-acceleration 0.02)
 (define ship-turn-rate 4.0)
-(define asteroid-timer 100)
+(define asteroid-timer-default 200)
+(define asteroid-timer asteroid-timer-default)
 (define brick:red     (make-brick-type image:brick-red 10))
 (define brick:green   (make-brick-type image:brick-green 20))
 (define brick:blue    (make-brick-type image:brick-blue 30))
@@ -150,7 +151,7 @@
                 (make-ship (vec2 (/ game-width 2) (/ game-height 2))
                            initial-rotation
                            initial-velocity))
-              (make-asteroid (vec2 100 100) 0 (vec2 0 0))
+              (list (make-asteroid (vec2 0 0) 0 (vec2 0 0)))
               (make-brick-grid
                (vector
                 (vector brick:red brick:green brick:blue brick:red brick:green brick:blue brick:red brick:green)
@@ -272,8 +273,7 @@
             (ship (level-ship *level*))
             (ship-pos (ship-position ship))
             (ship-vel (ship-velocity ship))
-            (asteroid (level-asteroids *level*))
-            (asteroid-pos (asteroid-position asteroid))
+            (asteroids (level-asteroids *level*))
             (score (level-score *level*)))
        ;; Read input
        (update-ship-velocity! *level*)
@@ -293,13 +293,18 @@
        (set-vec2-y! ship-pos (+ (vec2-y ship-pos) (vec2-y ship-vel)))
 
        ;; Move asteroids
-       (move-asteroid asteroid ship)
+       (for-each (lambda (asteroid)
+                   (move-asteroid asteroid ship))
+                 asteroids)
 
        ;; Spawn asteroids
-       ;; (set! asteroid-timer (- asteroid-timer 1))
-       ;; (when (<= asteroid-timer 0)
-         ;; (make-asteroid (vec2 100 100) 0 (vec2 0 0))
-         ;; (set! asteroid-timer 100))
+       (set! asteroid-timer (- asteroid-timer 1))
+       (when (<= asteroid-timer 0)
+         (set! asteroid-timer asteroid-timer-default)
+         (set-level-asteroids!
+          *level*
+          (append asteroids
+                  (list (make-asteroid (vec2 0 0) 0 (vec2 0 0))))))
 
        ;; Collide ball against walls, bricks, and paddle.
        (cond
@@ -361,7 +366,10 @@
     ;; Draw ship
     (draw-ship context (ship-position ship) (ship-rotation ship))
     ;; Draw asteroids
-    (draw-asteroid context asteroids)
+    (for-each (lambda (asteroid)
+                (draw-asteroid context asteroid))
+              asteroids)
+
     ;; (do ((i 0 (+ i 1)))
     ;;     ((= i (vector-length asteroids)))
     ;;   (let* ((asteroid (vector-ref asteroids i))
