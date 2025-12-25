@@ -245,6 +245,19 @@
                      (set-rect-y! b-hitbox (+ (rect-y b-hitbox) (rect-height overlap)))
                      (set-rect-y! b-hitbox (- (rect-y b-hitbox) (rect-height overlap))))))))))
 
+(define (move-asteroid asteroid ship)
+  (let* ((asteroid-speed 0.4)
+         (position (asteroid-position asteroid))
+         (x (vec2-x position))
+         (y (vec2-y position))
+         (ship-pos (ship-position ship))
+         (ship-x (vec2-x ship-pos))
+         (ship-y (vec2-y ship-pos))
+         (v (vec2 (- ship-x x) (- ship-y y))))
+    (vec2-normalize! v)
+    (set-vec2-x! position (+ (vec2-x position) (vec2-x v)))
+    (set-vec2-y! position (+ (vec2-y position) (vec2-y v)))))
+
 (define dt (/ 1000.0 60.0)) ; aim for updating at 60Hz
 (define (update)
   (match (level-state *level*)
@@ -259,6 +272,8 @@
             (ship (level-ship *level*))
             (ship-pos (ship-position ship))
             (ship-vel (ship-velocity ship))
+            (asteroid (level-asteroids *level*))
+            (asteroid-pos (asteroid-position asteroid))
             (score (level-score *level*)))
        ;; Read input
        (update-ship-velocity! *level*)
@@ -276,6 +291,9 @@
        ;; Move ship
        (set-vec2-x! ship-pos (+ (vec2-x ship-pos) (vec2-x ship-vel)))
        (set-vec2-y! ship-pos (+ (vec2-y ship-pos) (vec2-y ship-vel)))
+
+       ;; Move asteroids
+       (move-asteroid asteroid ship)
 
        ;; Spawn asteroids
        ;; (set! asteroid-timer (- asteroid-timer 1))

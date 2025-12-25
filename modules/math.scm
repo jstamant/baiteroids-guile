@@ -1,3 +1,4 @@
+;;; Copyright (C) 2025 Justin St-Amant <jstamant24@gmail.com>
 ;;; Copyright (C) 2024 David Thompson <dave@spritely.institute>
 ;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +25,7 @@
   #:use-module (hoot ffi)
   #:export (clamp
             random
+            atan2
             pi
             radians->degrees
             degrees->radians))
@@ -36,6 +38,10 @@
 (define-foreign random
   "math" "random"
   -> f64)
+
+(define-foreign atan2
+  "math" "atan2"
+  f64 f64 -> f64)
 
 (define pi 3.141592654)
 

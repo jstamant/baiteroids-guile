@@ -1,3 +1,4 @@
+;;; Copyright (C) 2025 Justin St-Amant <jstamant24@gmail.com>
 ;;; Copyright (C) 2024 David Thompson <dave@spritely.institute>
 ;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +27,7 @@
             vec2?
             vec2-x
             vec2-y
+            vec2-copy
             set-vec2-x!
             set-vec2-y!
             vec2-add!
@@ -56,6 +58,9 @@
 
 (define (vec2-y v)
   (f64-ref (vec2-bv v) 8))
+
+(define (vec2-copy v)
+  (make-vec2 (bytevector-copy (vec2-bv v))))
 
 (define (set-vec2-x! v x)
   (f64-set! (vec2-bv v) 0 x))

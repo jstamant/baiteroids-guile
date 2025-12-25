@@ -76,7 +76,8 @@ window.addEventListener("load", async () => {
           arc: (ctx, x, y, r, start, angle) => ctx.arc(x, y, r, start, angle)
         },
         math: {
-          random: () => Math.random()
+          random: () => Math.random(),
+          atan2: (y, x) => Math.atan2(y, x)
         }
       }
     });
