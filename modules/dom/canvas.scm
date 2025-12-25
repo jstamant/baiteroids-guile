@@ -22,6 +22,7 @@
   #:use-module (hoot ffi)
   #:export (get-context
             set-fill-color!
+            set-stroke-style!
             set-font!
             set-text-align!
             clear-rect
@@ -35,7 +36,9 @@
             close-path
             move-to
             line-to
+            arc
             fill
+            stroke
             rotate
             translate))
 
@@ -47,6 +50,9 @@
 ;; CanvasRenderingContext2D
 (define-foreign set-fill-color!
   "canvas" "setFillColor"
+  (ref extern) (ref string) -> none)
+(define-foreign set-stroke-style!
+  "canvas" "setStrokeStyle"
   (ref extern) (ref string) -> none)
 (define-foreign set-font!
   "canvas" "setFont"
@@ -88,8 +94,14 @@
 (define-foreign line-to
   "canvas" "lineTo"
   (ref extern) f64 f64 -> none)
+(define-foreign arc
+  "canvas" "arc"
+  (ref extern) f64 f64 f64 f64 f64 -> none)
 (define-foreign fill
   "canvas" "fill"
+  (ref extern) -> none)
+(define-foreign stroke
+  "canvas" "stroke"
   (ref extern) -> none)
 
 (define-foreign rotate

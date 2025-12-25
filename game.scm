@@ -44,6 +44,13 @@
   ;; x->magnitude, y->angle - see chickadee for Dave's implementation
   (velocity ship-velocity))
 
+(define-record-type <asteroid>
+  (make-asteroid position rotation velocity)
+  asteroid-type?
+  (position asteroid-position)
+  (rotation asteroid-rotation set-asteroid-rotation!)
+  (velocity asteroid-velocity))
+
 (define-record-type <brick-type>
   (make-brick-type image points)
   brick-type?
@@ -70,10 +77,11 @@
   (hitbox paddle-hitbox))
 
 (define-record-type <level>
-  (make-level state ship bricks ball paddle score move-left? move-right? move-up?)
+  (make-level state ship asteroids bricks ball paddle score move-left? move-right? move-up?)
   level?
   (state level-state set-level-state!) ; play, win, lose
   (ship level-ship)
+  (asteroids level-asteroids)
   (bricks level-bricks)
   (ball level-ball)
   (paddle level-paddle)
@@ -105,6 +113,7 @@
 (define paddle-speed  6.0)
 (define ship-acceleration 0.02)
 (define ship-turn-rate 4.0)
+(define asteroid-timer 100)
 (define brick:red     (make-brick-type image:brick-red 10))
 (define brick:green   (make-brick-type image:brick-green 20))
 (define brick:blue    (make-brick-type image:brick-blue 30))
@@ -141,6 +150,7 @@
                 (make-ship (vec2 (/ game-width 2) (/ game-height 2))
                            initial-rotation
                            initial-velocity))
+              (make-asteroid (vec2 100 100) 0 (vec2 0 0))
               (make-brick-grid
                (vector
                 (vector brick:red brick:green brick:blue brick:red brick:green brick:blue brick:red brick:green)
@@ -267,6 +277,12 @@
        (set-vec2-x! ship-pos (+ (vec2-x ship-pos) (vec2-x ship-vel)))
        (set-vec2-y! ship-pos (+ (vec2-y ship-pos) (vec2-y ship-vel)))
 
+       ;; Spawn asteroids
+       ;; (set! asteroid-timer (- asteroid-timer 1))
+       ;; (when (<= asteroid-timer 0)
+         ;; (make-asteroid (vec2 100 100) 0 (vec2 0 0))
+         ;; (set! asteroid-timer 100))
+
        ;; Collide ball against walls, bricks, and paddle.
        (cond
         ((< (rect-x b-hitbox) 0.0)      ; left wall
@@ -319,24 +335,26 @@
         ;;(ball (level-ball *level*))
         ;;(paddle (level-paddle *level*))
         (ship (level-ship *level*))
+        (asteroids (level-asteroids *level*))
         (score (level-score *level*)))
     ;; Draw background
     (set-fill-color! context game-bg)
     (fill-rect context 0.0 0.0 game-width game-height)
     ;; Draw ship
     (draw-ship context (ship-position ship) (ship-rotation ship))
-    ;; ;; Draw bricks
+    ;; Draw asteroids
+    (draw-asteroid context asteroids)
     ;; (do ((i 0 (+ i 1)))
-    ;;     ((= i (vector-length bricks)))
-    ;;   (let* ((brick (vector-ref bricks i))
-    ;;          (type (brick-type brick))
-    ;;          (hitbox (brick-hitbox brick)))
-    ;;     (unless (brick-broken? brick)
-    ;;       (draw-image context (brick-type-image type)
+    ;;     ((= i (vector-length asteroids)))
+    ;;   (let* ((asteroid (vector-ref asteroids i))
+    ;;          (type (asteroid-type asteroid))
+    ;;          (hitbox (asteroid-hitbox asteroid)))
+    ;;     (unless (asteroid-broken? asteroid)
+    ;;       (draw-image context (asteroid-type-image type)
     ;;                   0.0 0.0
-    ;;                   brick-width brick-height
+    ;;                   asteroid-width asteroid-height
     ;;                   (rect-x hitbox) (rect-y hitbox)
-    ;;                   brick-width brick-height))))
+    ;;                   asteroid-width asteroid-height))))
     ;; ;; Draw paddle
     ;; (let ((w 104.0)
     ;;       (h 24.0)
@@ -380,6 +398,18 @@
     (line-to context -10 8)
     (close-path context)
     (fill context)
+    (set-transform! context 1 0 0 1 0 0)))
+
+(define (draw-asteroid context asteroid)
+  (let* ((position (asteroid-position asteroid))
+         (x (vec2-x position))
+         (y (vec2-y position)))
+    (set-stroke-style! context game-fg)
+    (translate context x y)
+    (begin-path context)
+    (arc context 0 0 20 0 (* 2 pi))
+    (close-path context)
+    (stroke context)
     (set-transform! context 1 0 0 1 0 0)))
 
 ;; Input

@@ -55,6 +55,7 @@ window.addEventListener("load", async () => {
         canvas: {
           getContext: (elem, type) => elem.getContext(type),
           setFillColor: (ctx, color) => ctx.fillStyle = color,
+          setStrokeStyle: (ctx, style) => ctx.strokeStyle = style,
           setFont: (ctx, font) => ctx.font = font,
           setTextAlign: (ctx, align) => ctx.textAlign = align,
           clearRect: (ctx, x, y, w, h) => ctx.clearRect(x, y, w, h),
@@ -69,8 +70,10 @@ window.addEventListener("load", async () => {
           lineTo: (ctx, x, y) => ctx.lineTo(x, y),
           moveTo: (ctx, x, y) => ctx.moveTo(x, y),
           fill: (ctx) => ctx.fill(),
+          stroke: (ctx) => ctx.stroke(),
           rotate: (ctx, angle) => ctx.rotate(angle),
-          translate: (ctx, x, y) => ctx.translate(x, y)
+          translate: (ctx, x, y) => ctx.translate(x, y),
+          arc: (ctx, x, y, r, start, angle) => ctx.arc(x, y, r, start, angle)
         },
         math: {
           random: () => Math.random()
