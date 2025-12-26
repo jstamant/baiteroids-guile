@@ -1,5 +1,31 @@
 # Baiteroids
 
+A spin on the classic Asteroids arcade game! Keep yourself safe by smashing
+asteroids together as they gravitate towards you!
+
+I've decided on abandoning this project, as I kept running into issues with
+[Guile Hoot](https://spritely.institute/hoot/). It works pretty well, but it
+really took all the fun out of programming in Guile Scheme.
+
+I would add SRFIs and try using built-in functions to be met with Hoot throwing
+compilation errors.
+
+![screenshot](https://raw.githubusercontent.com/jstamant/baiteroids-guile/refs/heads/main/screenshot.png)
+
+I might continue this project in something that has better support for the
+browser.
+
+## Features
+
+Lol?
+
+- [x] Player movement
+- [x] Asteroid movement
+- [x] Asteroid spawning
+- [ ] Gravity (the core mechanic)
+- [ ] Collisions
+- [ ] Score keeping
+
 ## Running
 
 The fastest way to get everything you need is to use [GNU
